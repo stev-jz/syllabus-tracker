@@ -10,3 +10,51 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+model Course {
+  id          String   @id @default(cuid())
+  name        String?
+  term        String?
+  description String?
+  materials   String?
+  assessment  String?
+  policies    String?
+  pdfPath     String
+  status      Status   @default(LOADING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Each course can have multiple sections with different instructors
+  sections    Section[]
+}
+
+model Section {
+  id           String   @id @default(cuid())
+  sectionCode  String   // e.g., "LEC0101", "LEC0102"
+  instructor   String   // e.g., "Fatemeh Jazinizadeh"
+  
+  // Each section can have multiple lecture times/locations
+  lectures     Lecture[]
+  
+  // Link back to the course
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId     String
+}
+
+model Lecture {
+  id        String @id @default(cuid())
+  dayOfWeek String // e.g., "Monday", "Wednesday", "Friday"
+  startTime String // e.g., "2:00 PM"
+  endTime   String // e.g., "3:00 PM"
+  location  String // e.g., "BA 1190", "SF 1101"
+  
+  // Link back to the section
+  section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  sectionId String
+}
+
+enum Status {
+  LOADING
+  SUCCESS
+  FAILED
+}
