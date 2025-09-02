@@ -80,6 +80,14 @@ export async function extractCourseFromPDF(pdfFile: File): Promise<ExtractedCour
     - If there are multiple assessment methods, list them all with their percentages
     - Pay special attention to any tabular data showing grade distributions
     - Do not just extract the text before a table - extract the table contents themselves
+    
+    IMPORTANT: When interpreting assessment tables:
+    - If you see column headers like "Total quizzes", "Total final exam", "Total assignments", etc.
+    - The percentage values listed UNDER these column headers represent the weight/percentage for that assessment type
+    - For example: If "Total quizzes" column shows "55%" and "Total final exam" column shows "45%", 
+      this means quizzes are worth 55% and the final exam is worth 45% of the total grade
+    - Always interpret values under column headers as the percentage weight for that assessment category
+    - Look for the actual percentage numbers in the table cells, not just in the row labels
 
     Examples of good assessment extraction:
     - "Midterm: 25%, Lab Exercises: 20%, Final Exam: 55%"
