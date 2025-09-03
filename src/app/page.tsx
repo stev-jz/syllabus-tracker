@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import UploadForm from '../../components/UploadForm'
-import CourseCard from '../../components/CourseCard'
+import UploadForm from '../components/UploadForm'
+import CourseCard from '../components/CourseCard'
 
 // Define the shape of our course data
 interface Course {
