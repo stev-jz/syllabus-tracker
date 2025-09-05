@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '../../../lib/prisma'
 import { extractCourseFromPDF } from '../../../lib/gemini'
-import path from 'path'
-import { writeFile, unlink } from 'fs/promises'
+// Removed path import since we're not using filesystem paths in production
+// Removed fs/promises imports since we're not using filesystem in production
 
 // This function handles POST requests to /api/upload
 export async function POST(request: NextRequest) {
@@ -27,15 +27,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create a unique filename and save the PDF to the server
-    const timestamp = Date.now()
-    const filename = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-    const filePath = path.join(process.cwd(), 'uploads', filename)
-    
-    // Convert file to bytes and save it
+    // For Vercel deployment, we'll store the file in memory instead of filesystem
+    // Convert file to bytes for processing
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
+    
+    // Create a unique filename for reference (not actually stored on filesystem)
+    const timestamp = Date.now()
+    const filename = `${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+    const filePath = `uploads/${filename}` // Just for reference in database
 
     // Create initial course record in database with LOADING status
     const course = await prisma.course.create({
@@ -103,12 +103,7 @@ export async function POST(request: NextRequest) {
         where: { id: course.id }
       })
 
-      // Also delete the PDF file
-      try {
-        await unlink(filePath)
-      } catch (deleteError) {
-        console.error('Failed to delete PDF file:', deleteError)
-      }
+      // Note: No need to delete file since we're not storing it on filesystem in production
 
       console.error('AI processing failed:', aiError)
       
