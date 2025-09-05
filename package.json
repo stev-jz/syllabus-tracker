@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:dev": "prisma generate --schema=./prisma/schema.dev.prisma",
+    "db:push:dev": "prisma db push --schema=./prisma/schema.dev.prisma"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

@@ -1,14 +1,12 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
+// Development schema using SQLite
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model Course {
@@ -19,37 +17,30 @@ model Course {
   materials   String?
   assessment  String?
   policies    String?
-  examDates   String?  // New field for exam dates (midterms, finals, major quizzes)
+  examDates   String?
   pdfPath     String
   status      Status   @default(LOADING)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  // Each course can have multiple sections with different instructors
   sections    Section[]
 }
 
 model Section {
   id           String   @id @default(cuid())
-  sectionCode  String   // e.g., "LEC0101", "LEC0102"
-  instructor   String   // e.g., "Fatemeh Jazinizadeh"
-  
-  // Each section can have multiple lecture times/locations
+  sectionCode  String
+  instructor   String
   lectures     Lecture[]
-  
-  // Link back to the course
   course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId     String
 }
 
 model Lecture {
   id        String @id @default(cuid())
-  dayOfWeek String // e.g., "Monday", "Wednesday", "Friday"
-  startTime String // e.g., "2:00 PM"
-  endTime   String // e.g., "3:00 PM"
-  location  String // e.g., "BA 1190", "SF 1101"
-  
-  // Link back to the section
+  dayOfWeek String
+  startTime String
+  endTime   String
+  location  String
   section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   sectionId String
 }
@@ -59,3 +50,4 @@ enum Status {
   SUCCESS
   FAILED
 }
+
