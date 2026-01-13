@@ -43,14 +43,18 @@ export default function Dashboard() {
       const response = await fetch('/api/courses')
       
       if (!response.ok) {
-        throw new Error('Failed to fetch courses')
+        // Try to get error details from response
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.image.pngerror('API Error:', response.status, errorData)
+        throw new Error(errorData.error || `Failed to fetch courses (${response.status})`)
       }
       
       const data = await response.json()
       setCourses(data)
       setError(null)
     } catch (err) {
-      setError('Failed to load courses')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load courses'
+      setError(errorMessage)
       console.error('Error fetching courses:', err)
     } finally {
       setLoading(false)
