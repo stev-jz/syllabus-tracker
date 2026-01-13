@@ -10,6 +10,7 @@ interface CourseCardProps {
     description: string | null
     assessment: string | null
     status: 'LOADING' | 'SUCCESS' | 'FAILED'
+    archived: boolean
     createdAt: string
     sections: {
       id: string
@@ -25,9 +26,10 @@ interface CourseCardProps {
     }[]
   }
   onDelete?: () => void // Callback for when course is deleted
+  onArchive?: () => void // Callback for when course is archived/unarchived
 }
 
-export default function CourseCard({ course, onDelete }: CourseCardProps) {
+export default function CourseCard({ course, onDelete, onArchive }: CourseCardProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'SUCCESS':
@@ -41,7 +43,29 @@ export default function CourseCard({ course, onDelete }: CourseCardProps) {
     }
   }
 
+  const handleArchive = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
 
+    try {
+      const response = await fetch(`/api/courses/${course.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: !course.archived })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update course')
+      }
+
+      if (onArchive) {
+        onArchive()
+      }
+    } catch (error) {
+      console.error('Error archiving course:', error)
+      alert('Failed to archive course. Please try again.')
+    }
+  }
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation when clicking delete
@@ -82,10 +106,25 @@ export default function CourseCard({ course, onDelete }: CourseCardProps) {
                 {course.name || 'Untitled Course'}
               </h3>
             </div>
-            <div className="flex items-center gap-2">
-              <span className={`px-2 py-1 text-xs font-medium rounded-md border ${getStatusBadge(course.status)}`}>
-                {course.status}
-              </span>
+            <div className="flex items-center gap-1">
+              {course.archived && (
+                <span className="px-2 py-1 text-xs font-medium rounded-md border bg-gray-100 text-gray-600 border-gray-200">
+                  Archived
+                </span>
+              )}
+              <button
+                onClick={handleArchive}
+                className={`p-1 rounded cursor-pointer transition-colors ${
+                  course.archived 
+                    ? 'text-blue-500 hover:text-blue-700 hover:bg-blue-50' 
+                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                }`}
+                title={course.archived ? 'Unarchive course' : 'Archive course'}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+              </button>
               <button
                 onClick={handleDelete}
                 className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded cursor-pointer transition-colors"

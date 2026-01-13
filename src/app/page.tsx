@@ -15,6 +15,7 @@ interface Course {
   policies: string | null
   examDates: string | null
   status: 'LOADING' | 'SUCCESS' | 'FAILED'
+  archived: boolean
   createdAt: string
   sections: {
     id: string
@@ -31,10 +32,12 @@ interface Course {
 }
 
 export default function Dashboard() {
-  // State to store our courses
-  const [courses, setCourses] = useState<Course[]>([])
+  // State to store our courses (active and archived separately)
+  const [activeCourses, setActiveCourses] = useState<Course[]>([])
+  const [archivedCourses, setArchivedCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showArchived, setShowArchived] = useState(false)
 
   // Function to fetch courses from our API
   const fetchCourses = async () => {
@@ -43,14 +46,14 @@ export default function Dashboard() {
       const response = await fetch('/api/courses')
       
       if (!response.ok) {
-        // Try to get error details from response
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        console.image.pngerror('API Error:', response.status, errorData)
+        console.error('API Error:', response.status, errorData)
         throw new Error(errorData.error || `Failed to fetch courses (${response.status})`)
       }
       
       const data = await response.json()
-      setCourses(data)
+      setActiveCourses(data.active || [])
+      setArchivedCourses(data.archived || [])
       setError(null)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load courses'
@@ -89,11 +92,11 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Courses Section */}
+        {/* Active Courses Section */}
         <div>
           <div className="mb-6">
             <h2 className="text-2xl font-semibold text-gray-900">
-              Your Courses ({courses.length})
+              Your Courses ({activeCourses.length})
             </h2>
           </div>
 
@@ -112,15 +115,15 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Courses Grid (always show, includes upload card) */}
+          {/* Active Courses Grid */}
           {!loading && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-              {/* Course Cards first */}
-              {courses.map((course) => (
+              {activeCourses.map((course) => (
                 <CourseCard 
                   key={course.id} 
                   course={course} 
                   onDelete={fetchCourses}
+                  onArchive={fetchCourses}
                 />
               ))}
               
@@ -129,19 +132,55 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Empty State (only show when no courses AND not loading) */}
-          {!loading && !error && courses.length === 0 && (
+          {/* Empty State for active courses */}
+          {!loading && !error && activeCourses.length === 0 && (
             <div className="text-center py-8 mt-6">
               <div className="text-gray-400 mb-4">
                 <svg className="mx-auto h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No courses yet</h3>
-              <p className="text-gray-600">Upload your first syllabus PDF using the card above</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No active courses</h3>
+              <p className="text-gray-600">Upload a syllabus PDF using the card above</p>
             </div>
           )}
         </div>
+
+        {/* Archived Courses Section */}
+        {!loading && archivedCourses.length > 0 && (
+          <div className="mt-12">
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className="flex items-center gap-2 text-lg font-semibold text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+            >
+              <svg 
+                className={`w-5 h-5 transition-transform ${showArchived ? 'rotate-90' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              <span>Archived Courses ({archivedCourses.length})</span>
+              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+            </button>
+
+            {showArchived && (
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+                {archivedCourses.map((course) => (
+                  <CourseCard 
+                    key={course.id} 
+                    course={course} 
+                    onDelete={fetchCourses}
+                    onArchive={fetchCourses}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

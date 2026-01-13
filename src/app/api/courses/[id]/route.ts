@@ -39,6 +39,55 @@ export async function GET(
   }
 }
 
+// PATCH - Archive/unarchive a course
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: courseId } = await params
+    const body = await request.json()
+    
+    // Validate the archived field
+    if (typeof body.archived !== 'boolean') {
+      return NextResponse.json(
+        { error: 'Invalid request: archived must be a boolean' },
+        { status: 400 }
+      )
+    }
+
+    // Check if course exists
+    const existingCourse = await prisma.course.findUnique({
+      where: { id: courseId }
+    })
+
+    if (!existingCourse) {
+      return NextResponse.json(
+        { error: 'Course not found' },
+        { status: 404 }
+      )
+    }
+
+    // Update the course's archived status
+    const updatedCourse = await prisma.course.update({
+      where: { id: courseId },
+      data: { archived: body.archived }
+    })
+
+    return NextResponse.json({
+      message: body.archived ? 'Course archived successfully' : 'Course unarchived successfully',
+      course: updatedCourse
+    })
+
+  } catch (error) {
+    console.error('Error updating course:', error)
+    return NextResponse.json(
+      { error: 'Failed to update course' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
