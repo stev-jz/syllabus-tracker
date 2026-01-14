@@ -29,7 +29,7 @@ export async function extractCourseFromPDF(pdfFile: File): Promise<ExtractedCour
   try {
     // Get the Gemini model that can read files
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       generationConfig: { 
         responseMimeType: "application/json" // Make Gemini return JSON
       }
